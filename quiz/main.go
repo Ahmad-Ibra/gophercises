@@ -25,7 +25,8 @@ func parseFile(file string) []Problem {
 			break
 		}
 		if err != nil {
-			panic(err)
+			fmt.Printf("Failed to read the CSV file.")
+			os.Exit(1)
 		}
 
 		prob := Problem{q: record[0], a: record[1]}
@@ -41,7 +42,8 @@ func runQuiz(problems []Problem, score *int, c chan<- bool) {
 		var userAnswer string
 		_, err := fmt.Scanln(&userAnswer)
 		if err != nil {
-			return
+			fmt.Printf("Failed to scan input answer.")
+			os.Exit(1)
 		}
 
 		if userAnswer == problem.a {
@@ -57,7 +59,8 @@ func main() {
 
 	file, err := os.ReadFile("problems.csv")
 	if err != nil {
-		panic(err)
+		fmt.Printf("Failed to open the CSV file.")
+		os.Exit(1)
 	}
 
 	problems := parseFile(string(file))
