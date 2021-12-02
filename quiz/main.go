@@ -10,14 +10,14 @@ import (
 	"time"
 )
 
-type Problem struct {
+type problem struct {
 	q string // question
 	a string // answer
 }
 
-func parseFile(file string) []Problem {
+func parseFile(file string) []problem {
 	r := csv.NewReader(strings.NewReader(file))
-	var problems []Problem
+	var problems []problem
 
 	for {
 		record, err := r.Read()
@@ -25,25 +25,23 @@ func parseFile(file string) []Problem {
 			break
 		}
 		if err != nil {
-			fmt.Printf("Failed to read the CSV file.")
-			os.Exit(1)
+			exit(fmt.Sprintf("Failed to read the CSV file."))
 		}
 
-		prob := Problem{q: record[0], a: record[1]}
+		prob := problem{q: record[0], a: record[1]}
 		problems = append(problems, prob)
 	}
 	return problems
 }
 
-func runQuiz(problems []Problem, score *int, c chan<- bool) {
+func runQuiz(problems []problem, score *int, c chan<- bool) {
 	for i, problem := range problems {
 		fmt.Printf("Problem #%d: %s = ", i+1, problem.q)
 
 		var userAnswer string
 		_, err := fmt.Scanln(&userAnswer)
 		if err != nil {
-			fmt.Printf("Failed to scan input answer.")
-			os.Exit(1)
+			exit(fmt.Sprintf("Failed to scan input answer."))
 		}
 
 		if userAnswer == problem.a {
@@ -53,14 +51,18 @@ func runQuiz(problems []Problem, score *int, c chan<- bool) {
 	c <- true
 }
 
+func exit(msg string) {
+	fmt.Println(msg)
+	os.Exit(1)
+}
+
 func main() {
 	pLimit := flag.Int("limit", 9999, "the time limit in seconds")
 	flag.Parse()
 
 	file, err := os.ReadFile("problems.csv")
 	if err != nil {
-		fmt.Printf("Failed to open the CSV file.")
-		os.Exit(1)
+		exit(fmt.Sprintf("Failed to open the CSV file."))
 	}
 
 	problems := parseFile(string(file))
