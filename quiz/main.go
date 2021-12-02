@@ -2,10 +2,12 @@ package main
 
 import (
 	"encoding/csv"
+	"flag"
 	"fmt"
 	"io"
 	"os"
 	"strings"
+	"time"
 )
 
 type Problem struct {
@@ -32,16 +34,7 @@ func parseFile(file string) []Problem {
 	return problems
 }
 
-func main() {
-	// TODO: add flag for custom time limit
-	file, err := os.ReadFile("problems.csv")
-	if err != nil {
-		panic(err)
-	}
-
-	problems := parseFile(string(file))
-
-	var score int
+func runQuiz(problems []Problem, score *int, c chan<- bool) {
 	for i, problem := range problems {
 		fmt.Printf("Problem #%d: %s = ", i+1, problem.q)
 
@@ -52,9 +45,32 @@ func main() {
 		}
 
 		if userAnswer == problem.a {
-			score++
+			*score++
 		}
 	}
+	c <- true
+}
 
-	fmt.Printf("You scored %d out of %d.\n", score, len(problems))
+func main() {
+	pLimit := flag.Int("limit", 9999, "the time limit in seconds")
+	flag.Parse()
+
+	file, err := os.ReadFile("problems.csv")
+	if err != nil {
+		panic(err)
+	}
+
+	problems := parseFile(string(file))
+	var score int
+	c := make(chan bool)
+	go runQuiz(problems, &score, c)
+
+	select {
+	case <-c:
+		break
+	case <-time.After(time.Duration(*pLimit) * time.Second):
+		break
+	}
+
+	fmt.Printf("\nYou scored %d out of %d.\n", score, len(problems))
 }
